@@ -1,0 +1,62 @@
+---
+- name: populate /etc/environment
+  lineinfile:
+    path: "/etc/environment"
+    state: present
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value}}"
+  with_items: "{{ os_environment }}"
+  tags: ['packages', 'configure']
+
+- name: install web components
+  apt: name={{item}} state=present
+  with_items:
+    - python3-pip
+    - python3-virtualenv
+    - pkg-config
+    - gcc
+    - default-libmysqlclient-dev
+    - build-essential
+    - python3-dev
+  tags: ['packages']
+
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: /var/www/demo
+    state: directory
+    mode: '0755'
+
+- name: install python dependencies
+  pip:
+    name: "{{item}}"
+    virtualenv: /var/www/demo/.venv
+  with_items:
+    - flask
+    - flask-sqlalchemy
+    - mysql-connector-python
+  notify: restart apache2
+  tags: ['packages']
+
+- name: set ansible_python_interpreter
+  set_fact: ansible_python_interpreter="/var/www/demo/.venv/bin/python"
+  tags: ['system']
+
+- name: copy demo.wsgi
+  template: src=demo.wsgi.j2 dest=/var/www/demo/demo.wsgi mode=0755
+  notify: restart apache2
+  tags: ['configure']
+
+- name: copy demo app source
+  copy: src=demo/app/ dest=/var/www/demo mode=0755
+  notify: restart apache2
+  tags: ['configure']
+
+- name: copy apache config
+  copy: src=demo/demo.conf dest=/etc/apache2/sites-available mode=0755
+  notify: restart apache2
+  tags: ['configure']
+
+- name: activate demo apache site
+  file: src=/etc/apache2/sites-available/demo.conf dest=/etc/apache2/sites-enabled/demo.conf state=link
+  notify: restart apache2
+  tags: ['configure']

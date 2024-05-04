@@ -1,0 +1,23 @@
+# The 'main' file for configuring the hosts is located in /etc/ansible/ansible.cfg
+# But it is better to create a separate inverntory file, which f.e. can be uploaded to git
+#
+# To avoid specifying the inventory every time you run an ansible command,
+# we can create a local ansible.cfg file with defaults pointing to our inventory
+
+# We can split the hosts by groups like this:
+[loadbalancer]
+server01 ansible_user=server01 ansible_host=192.168.122.212
+
+[webserver]
+server02 ansible_user=server02 ansible_host=192.168.122.107
+# app02
+
+[database]
+server03 ansible_user=server03 ansible_host=192.168.122.191
+
+# Do not forget about the control host as well!
+# By default, ansible will attempt to ssh into all the hosts you specify,
+# but in this case we are already on control host, so we should specify
+# `ansible_connection=local`
+[control]
+control01 ansible_connection=local

@@ -1,0 +1,7 @@
+---
+ansible_python_interpreter: /usr/bin/python3
+os_environment:
+  - key: MYSQLCLIENT_CFLAGS
+    value: pkg-config mysqlclient --cflags
+  - key: MYSQLCLIENT_LDFLAGS
+    value: pkg-config mysqlclient --libs

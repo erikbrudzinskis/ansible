@@ -1,0 +1,48 @@
+---
+- name: populate /etc/environment
+  lineinfile:
+    path: "/etc/environment"
+    state: present
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value}}"
+  tags: ['packages', 'configure']
+  with_items: "{{ os_environment }}"
+- name: install mysql apt dependencies
+  apt: name={{item}} state=present
+  with_items:
+    - mysql-server
+    - python3-pip
+    - pkg-config
+    - gcc
+    - default-libmysqlclient-dev
+    - build-essential
+    - python3-dev
+    - python3-virtualenv
+    - python3-packaging
+    - python3-full
+  tags: ['packages']
+
+- name: install mysql pip dependencies
+  pip:
+    name: "{{item}}"
+    state: present
+    virtualenv: /var/www/demo/.venv
+  with_items:
+    - packaging
+    - mysqlclient
+  tags: ['packages']
+- name: set ansible_python_interpreter
+  set_fact: ansible_python_interpreter="/var/www/demo/.venv/bin/python"
+- name: ensure mysql is listening on all ports
+  lineinfile: dest=/etc/mysql/my.cnf regexp=^bind-address line="bind-address = {{ ansible_default_ipv4.address }}"
+  notify: restart mysql
+  tags: ['configure']
+- name: ensure mysql is running
+  service: name=mysql state=started enabled=yes
+  tags: ['service']
+- name: configure database
+  mysql_db: name={{ db_name }} state=present
+  tags: ['configure']
+- name: create user for database
+  mysql_user: name={{ db_user_name }} password={{ db_pass }} priv={{ db_name }}.*:ALL host='{{ db_user_host }}' state=present
+  tags: ['configure']

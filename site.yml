@@ -1,0 +1,20 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: update apt cache
+      apt: update_cache=yes cache_valid_time=86400
+      tags: ['packages']
+    - name: Add IP address of all hosts to all hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ item }}$'
+        line: "{{ hostvars[item].ansible_host }} {{item}}"
+        state: present
+      when: hostvars[item].ansible_host is defined
+      with_items: "{{ groups.all }}"
+- ansible.builtin.import_playbook: control.yml
+- ansible.builtin.import_playbook: database.yml
+- ansible.builtin.import_playbook: webserver.yml
+- ansible.builtin.import_playbook: loadbalancer.yml

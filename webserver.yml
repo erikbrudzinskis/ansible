@@ -1,0 +1,7 @@
+---
+- hosts: webserver
+  become: true
+  gather_facts: false
+  roles:
+    - apache2
+    - { role: demo_app, db_schema_name: "{{ db_name }}", db_user_name: "{{ db_username }}", db_user_pass: "{{ db_password }}" }

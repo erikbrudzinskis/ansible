@@ -1,0 +1,4 @@
+---
+db_name: demo
+db_username: demo
+db_password: "{{ vault_db_pass }}"

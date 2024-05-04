@@ -1,0 +1,32 @@
+---
+- name: install nginx
+  apt: name=nginx state=present
+  tags: ['packages']
+- name: configure nginx site
+  template: src=nginx.conf.j2 dest=/etc/nginx/sites-available/{{ item.key }} mode=0644
+  notify: restart nginx
+  with_dict: "{{sites}}"
+  tags: ['configure']
+- name: deactivate default nginx sites
+  file: path=/etc/nginx/sites-available/default state=absent
+  notify: restart nginx
+  tags: ['configure']
+- name: get active sites
+  shell: ls -1 /etc/nginx/sites-enabled/
+  register: activeSites
+  changed_when: "activeSites.stdout_lines != sites.keys()|list"
+  tags: ['configure']
+- name: deactivate sites
+  file: path=/etc/nginx/sites-enabled/{{ item }} state=absent
+  with_items: "{{activeSites.stdout_lines}}"
+  tags: ['configure']
+  when: item not in sites
+  notify: restart nginx
+- name: activate nginx sites
+  file: src=/etc/nginx/sites-available/{{ item.key }} dest=/etc/nginx/sites-enabled/{{ item.key }} state=link
+  notify: restart nginx
+  with_dict: "{{sites}}"
+  tags: ['configure']
+- name: ensure nginx is running
+  service: name=nginx state=started enabled=yes
+  tags: ['service']

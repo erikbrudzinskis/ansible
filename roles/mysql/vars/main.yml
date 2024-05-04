@@ -1,0 +1,6 @@
+---
+os_environment:
+  - key: MYSQLCLIENT_CFLAGS
+    value: -I/usr/include/mysql
+  - key: MYSQLCLIENT_LDFLAGS
+    value: -lmysqlclient
